@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Solicitud de Condiciones Comerciales</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+</head>
+<script>
+
+async function descargarPDF() {
+
+    const rgpd1 = document.getElementById("consentimientoComercial");
+    const rgpd2 = document.getElementById("consentimientoDatos");
+
+    if (!rgpd1.checked || !rgpd2.checked) {
+        alert("Debe aceptar ambas cláusulas para poder descargar el PDF.");
+        return;
+    }
+
+    const codigoCliente =
+        document.getElementById("Cod_CLiente").value.trim() || "SIN_CODIGOCLIENTE";
+
+    const elemento = document.querySelector(".formularioPDF");
+
+    const elementosTemporales = [];
+
+    // Convertir INPUTS a DIVs temporales
+    document.querySelectorAll("input.form-control").forEach(input => {
+
+        const div = document.createElement("div");
+
+        div.innerText = input.value || "";
+
+        div.style.height = input.offsetHeight + "px";
+        div.style.lineHeight = input.offsetHeight + "px";
+        div.style.border = "1px solid #000";
+        div.style.padding = "0 6px";
+        div.style.fontSize = getComputedStyle(input).fontSize;
+        div.style.fontWeight = getComputedStyle(input).fontWeight;
+        div.style.backgroundColor = "#fff";
+        div.style.boxSizing = "border-box";
+        div.style.width = "100%";
+        div.style.overflow = "hidden";
+
+        input.style.display = "none";
+
+        input.parentNode.insertBefore(div, input.nextSibling);
+
+        elementosTemporales.push({
+            original: input,
+            temporal: div
+        });
+
+    });
+
+    // Convertir SELECTS a DIVs temporales
+    document.querySelectorAll("select.form-select").forEach(select => {
+
+        const div = document.createElement("div");
+
+        div.innerText =
+            select.options[select.selectedIndex]?.text || "";
+
+        div.style.height = select.offsetHeight + "px";
+        div.style.lineHeight = select.offsetHeight + "px";
+        div.style.border = "1px solid #000";
+        div.style.padding = "0 6px";
+        div.style.fontSize = getComputedStyle(select).fontSize;
+        div.style.fontWeight = getComputedStyle(select).fontWeight;
+        div.style.backgroundColor = "#fff";
+        div.style.boxSizing = "border-box";
+        div.style.width = "100%";
+        div.style.overflow = "hidden";
+
+        select.style.display = "none";
+
+        select.parentNode.insertBefore(div, select.nextSibling);
+
+        elementosTemporales.push({
+            original: select,
+            temporal: div
+        });
+
+    });
+
+    // Guardar estilos originales
+    const estilosOriginales = {
+        width: elemento.style.width,
+        maxWidth: elemento.style.maxWidth,
+        minWidth: elemento.style.minWidth,
+        transform: elemento.style.transform,
+        zoom: elemento.style.zoom
+    };
+
+    // Forzar tamaño fijo para la captura
+    elemento.style.width = "1200px";
+    elemento.style.maxWidth = "1200px";
+    elemento.style.minWidth = "1200px";
+    elemento.style.transform = "none";
+    elemento.style.zoom = "100%";
+
+    const canvas = await html2canvas(elemento, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        width: 1200,
+        windowWidth: 1200,
+        scrollX: 0,
+        scrollY: 0
+    });
+
+    // Restaurar estilos originales
+    elemento.style.width = estilosOriginales.width;
+    elemento.style.maxWidth = estilosOriginales.maxWidth;
+    elemento.style.minWidth = estilosOriginales.minWidth;
+    elemento.style.transform = estilosOriginales.transform;
+    elemento.style.zoom = estilosOriginales.zoom;
+
+    // Restaurar formulario
+    elementosTemporales.forEach(item => {
+        item.temporal.remove();
+        item.original.style.display = "";
+    });
+
+    console.log("Canvas:", canvas.width, canvas.height);
+
+    const imgData = canvas.toDataURL("image/png");
+
+    const { jsPDF } = window.jspdf;
+
+    const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+    });
+
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 5;
+
+    const maxWidth = pageWidth - (margin * 2);
+    const maxHeight = pageHeight - (margin * 2);
+
+    let imgWidth = maxWidth;
+    let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    if (imgHeight > maxHeight) {
+
+        const ratio = maxHeight / imgHeight;
+
+        imgHeight *= ratio;
+        imgWidth *= ratio;
+    }
+
+    const x = (pageWidth - imgWidth) / 2;
+    const y = (pageHeight - imgHeight) / 2;
+
+    pdf.addImage(
+        imgData,
+        "PNG",
+        x,
+        y,
+        imgWidth,
+        imgHeight
+    );
+
+    pdf.save(`Apertura_Cliente_${codigoCliente}.pdf`);
+}
+    document.querySelectorAll("input").forEach(input => {
+
+        // Si es checkbox o radio, desmarcar
+        if (
+            input.type === "checkbox" ||
+            input.type === "radio"
+        ) {
+
+            input.checked = false;
+
+        } else {
+
+            // Vaciar cualquier otro tipo de input
+            input.value = "";
+
+            // Limpiar también el atributo value
+            input.setAttribute("value", "");
+
+        }
+
+    });
+
+    // Vaciar todos los textarea
+    document.querySelectorAll("textarea").forEach(textarea => {
+
+        textarea.value = "";
+
+    });
+
+    // Reiniciar todos los desplegables
+    document.querySelectorAll("select").forEach(select => {
+
+        select.selectedIndex = 0;
+
+    });
+
+
+function soloUno(actual, grupo) {
+
+    document.querySelectorAll("." + grupo).forEach(check => {
+
+        if (check !== actual) {
+            check.checked = false;
+        }
+
+    });
+
+}
+  
+function limpiarFormulario() {
+
+    // Inputs de texto, fecha, número...
+    document.querySelectorAll('input').forEach(input => {
+
+        if (
+            input.type === 'text' ||
+            input.type === 'number' ||
+            input.type === 'date' ||
+            input.type === 'email'
+        ) {
+            input.value = '';
+        }
+
+        if (
+            input.type === 'checkbox' ||
+            input.type === 'radio'
+        ) {
+            input.checked = false;
+        }
+
+    });
+
+    // Selects
+    document.querySelectorAll('select').forEach(select => {
+        select.selectedIndex = 0;
+    });
+
+    // Textareas
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.value = '';
+    });
+
+}
+
+</script>
+<body>
+
+
+<button
+    class="btn btn-danger mb-3 descarga"
+    onclick="descargarPDF()">
+
+    Descargar PDF
+
+</button>
+
+            <button
+                class="btn btn-primary mb-3"
+                onclick="limpiarFormulario()">
+
+                BORRAR DATOS
+
+            </button>
+<div class="formularioPDF">
+
+
+<div class="container-fluid formulario label-negro">
+
+    <div class="row align-items-center mt-3">
+
+      <div class="col-3">
+            <img src="ISO.png" class="img-fluid">
+        </div> 
+
+        <div class="col-6 text-center">
+
+            <h1 class="titulo1">
+                SOLICITUD DE CONDICIONES COMERCIALES
+            </h1>
+
+        </div>
+
+        <div class="col-3 text-end">
+            <img src="DIMAE.png" class="img-fluid">
+        </div>
+
+    </div>
+
+    <div class="bloque">
+
+        <div class="row mb-1">
+
+            <div class="col-md-2 ">
+                <label class="label-azul">FECHA</label>
+                <input type="date" class="form-control campo label-negro">
+            </div>
+
+            <div class="col-md-5">
+                <label class="label-azul">DELEGACIÓN</label>
+                <select class="form-select campo">
+                        <option></option>
+                        <option>CIUDAD REAL</option>
+                        <option>TOLEDO</option>
+                        <option>ALBACETE</option>
+                        <option>ALCALÁ LA REAL</option>
+                        <option>CÓRDOBA</option>
+                        <option>LEGANÉS</option>
+                        <option>GRANADA</option>
+                        <option>SEVILLA</option>
+                        <option>MÁLAGA</option>
+                        <option>VALENCIA</option>
+                        <option>JEREZ DE LA FRONTERA</option>
+                    </select>
+                
+            </div>
+
+            <div class="col-md-3">
+                <label class="label-azul">CÓD CLIENTE</label>
+                <input class="form-control campo" id="Cod_CLiente">
+            </div>
+
+            <div class="col-md-2">
+                <label class="label-azul">PC</label>
+                <input class="form-control campo">
+            </div>
+
+        </div>
+
+        <div class="row mb-1">
+
+            <div class="col-md-2 label-negro bloque-checks">
+                <input type="checkbox"> CRÉDITO
+            </div>
+
+            <div class="col-md-2 label-negro bloque-checks">
+                <input type="checkbox"> CONTADO
+            </div>
+
+            <div class="col-md-4">
+                <label class="label-azul">GRUPO CLIENTE</label>
+                <select class="form-select campo">
+                        <option></option>
+                        <option>01 Instal. generalistas</option>
+                        <option>02 Instal. Industrial</option>
+                        <option>03 Instal. Terciario</option>
+                        <option>04 Instal. Residencial</option>
+                        <option>05 Cuadrista</option>
+                        <option>06 Renovables</option>
+                        <option>07 Serv. mantenimiento</option>
+                        <option>08 Instal Climatización</option>
+                        <option>09 Iluminación</option>
+                        <option>10 Organismos públicos</option>
+                        <option>11 Grandes superficies</option>
+                        <option>12 Fábrica/ Industria</option>
+                        <option>13 Agroalimentario</option>
+                        <option>14 Pequeño comercio</option>
+                        <option>15 Distribuidor</option>
+                        <option>16 Ferretería</option>
+                        <option>17 Instal. Fontanería</option>
+                        <option>18 Ingenierías</option>
+                        <option>50 Otros</option>
+                </select>
+            </div>
+
+            <div class="col-md-4 bloque-checks">
+                <label class="mb-0">ALBARÁN VALORADO</label>&nbsp;&nbsp;&nbsp;&nbsp;
+                        <input type="checkbox" class="grupo-albaran2"
+                            onclick="soloUno(this,'grupo-albaran2')">
+                        <span class="label-negro">SI</span> &nbsp;&nbsp;
+
+                        <input type="checkbox" class="grupo-albaran2"
+                            onclick="soloUno(this,'grupo-albaran2')">
+                        <span class="label-negro">NO</span>
+            </div>
+
+        </div>
+
+        <div class="row mb-1">
+
+            <div class="col-md-8">
+                <label>RAZÓN SOCIAL</label>
+                <input class="form-control campo">
+            </div>
+
+            <div class="col-md-4">
+                <label>NIF</label>
+                <input class="form-control campo">
+            </div>
+
+        </div>
+
+        <div class="row mb-1">
+
+            <div class="col-md-12">
+                <label>DOMICILIO</label>
+                <input class="form-control campo">
+            </div>
+
+        </div>
+
+        <div class="row">
+
+            <div class="col-md-3">
+                <label>TEL.</label>
+                <input class="form-control campo">
+            </div>
+
+            <div class="col-md-2">
+                <label>COD.POS</label>
+                <input class="form-control campo">
+            </div>
+
+            <div class="col-md-3">
+                <label>POBLACIÓN</label>
+                <input class="form-control campo">
+            </div>
+
+            <div class="col-md-4">
+                <label>PROVINCIA</label>
+                <input class="form-control campo">
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="bloque-azul">
+
+        <h4 class="text-center fw-bold">
+            PERSONAS DE CONTACTO
+        </h4>
+
+        <table class="table table-bordered" style="color: blue;">
+
+            <thead>
+
+            <tr style="font-size: 25px;">
+                <th></th>
+                <th style="font-size: 18px;">NOMBRE</th>
+                <th style="font-size: 18px;">APELLIDOS</th>
+                <th style="font-size: 18px;">TELÉFONO MÓVIL</th>
+                <th style="font-size: 18px;">CORREO ELECTRÓNICO</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+            <tr>
+
+                <td>DTO.COMERCIAL</td>
+
+                <td>
+                    <input class="form-control">
+                </td>
+
+                <td>
+                    <input class="form-control">
+                </td>
+
+                <td>
+                    <input class="form-control">
+                </td>
+
+                <td>
+                    <input class="form-control">
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td>DTO.FINANCIERO</td>
+
+                <td>
+                    <input class="form-control">
+                </td>
+
+                <td>
+                    <input class="form-control">
+                </td>
+
+                <td>
+                    <input class="form-control">
+                </td>
+
+                <td>
+                    <input class="form-control">
+                </td>
+
+            </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+        
+<div class="bloque pedidos-compacto">
+
+<h5 class="text-center fw-bold mb-1">PEDIDOS Y FACTURACIÓN</h5>
+
+<div class="row">
+
+<div class="col-md-6 bloque-checks">
+
+<div class="mb-2">
+    <label class="mb-0">ALBARÁN VALORADO</label>
+
+    <input type="checkbox" class="grupo-albaran"
+           onclick="soloUno(this,'grupo-albaran')">
+    <span class="label-negro opcion-check">SI</span>
+
+    <input type="checkbox" class="grupo-albaran"
+           onclick="soloUno(this,'grupo-albaran')">
+    <span class="label-negro opcion-check">NO</span>
+</div>
+
+<div class="mb-2">
+    <label class="mb-0">PEDIDO CLIENTE OBLIGATORIO</label>
+
+    <input type="checkbox" class="grupo-pedido"
+           onclick="soloUno(this,'grupo-pedido')">
+    <span class="label-negro opcion-check">SI</span>
+
+    <input type="checkbox" class="grupo-pedido"
+           onclick="soloUno(this,'grupo-pedido')">
+    <span class="label-negro opcion-check">NO</span>
+</div>
+
+<div class="mb-2">
+    <label class="mb-0">ALTA PÁGINA WEB</label>
+
+    <input type="checkbox" class="grupo-web"
+           onclick="soloUno(this,'grupo-web')">
+    <span class="label-negro opcion-check">SI</span>
+
+    <input type="checkbox" class="grupo-web"
+           onclick="soloUno(this,'grupo-web')">
+    <span class="label-negro opcion-check">NO</span>
+</div>
+
+<div class="mb-2">
+    <label class="mb-0">ENVÍO FACTURAS</label>
+
+    <input type="checkbox" class="grupo-facturas"
+           onclick="soloUno(this,'grupo-facturas')">
+    <span class="label-negro opcion-check">EMAIL</span>
+
+    <input type="checkbox" class="grupo-facturas"
+           onclick="soloUno(this,'grupo-facturas')">
+    <span class="label-negro opcion-check">POSTAL</span>
+</div>
+
+</div>
+
+<div class="col-md-6">
+
+<div class="mb-2">
+<label>AGRUPACIÓN FACTURAS</label>
+<select class="form-select campo">
+<option></option>
+<option>FACTURA UNICA</option>
+<option>FACTURA POR OBRA</option>
+<option>FACT.POR OBRA Y PEDIDO</option>
+<option>FACT.POR OBRA Y ENTREGA</option>
+<option>FACT.POR ENTREGA</option>
+<option>FACT.POR PEDIDO</option>
+</select>
+</div>
+
+<div class="mb-2">
+<label>EMAIL ALTA WEB</label>
+<input class="form-control">
+</div>
+
+<div class="mb-2">
+<label>EMAIL ENVÍO FACTURAS</label>
+<input class="form-control">
+</div>
+
+
+</div>
+
+<div class="col-md-12">
+<label>DIRECCIÓN FACTURACIÓN</label>
+<input class="form-control">
+
+</div>
+</div>
+
+<div class="row mt-1">
+<div class="col-md-2">
+<label>C.P.</label>
+<input class="form-control">
+</div>
+
+<div class="col-md-5">
+<label>POBLACIÓN</label>
+<input class="form-control">
+</div>
+
+<div class="col-md-5">
+<label>PROVINCIA</label>
+<input class="form-control">
+</div>
+</div>
+
+<div class="row mt-1">
+<div class="col-md-12">
+<label>OBSERVACIONES</label>
+<input class="form-control">
+</div>
+</div>
+<div class="row mt-2">
+
+    <div class="col-md-2">
+        <label>PLAZO DE PAGO</label>
+        <select class="form-select">
+            <option></option>
+            <option>CONTADO</option>
+            <option>30 DÍAS F.F.</option>
+            <option>40 DÍAS F.F.</option>
+            <option>30-60 DÍAS F.F.</option>
+            <option>30-60-75 DÍAS F.F.</option>
+            <option>60 DÍAS F.F.</option>
+            <option>60-75 DÍAS F.F.</option>
+            <option>75 DÍAS F.F.</option>
+
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <label>DÍA DE PAGO 1</label>
+        <select class="form-select">
+                <option></option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+                <option>11</option>
+                <option>12</option>
+                <option>13</option>
+                <option>14</option>
+                <option>15</option>
+                <option>16</option>
+                <option>17</option>
+                <option>18</option>
+                <option>19</option>
+                <option>20</option>
+                <option>21</option>
+                <option>22</option>
+                <option>23</option>
+                <option>24</option>
+                <option>25</option>
+                <option>26</option>
+                <option>27</option>
+                <option>28</option>
+                <option>29</option>
+                <option>30</option>
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <label>DÍA DE PAGO 2</label>
+        <select class="form-select">
+                <option></option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+                <option>11</option>
+                <option>12</option>
+                <option>13</option>
+                <option>14</option>
+                <option>15</option>
+                <option>16</option>
+                <option>17</option>
+                <option>18</option>
+                <option>19</option>
+                <option>20</option>
+                <option>21</option>
+                <option>22</option>
+                <option>23</option>
+                <option>24</option>
+                <option>25</option>
+                <option>26</option>
+                <option>27</option>
+                <option>28</option>
+                <option>29</option>
+                <option>30</option>
+        </select>
+    </div>
+
+    <div class="col-md-5 offset-md-1">
+        <label>VÍA DE PAGO</label>
+        <select class="form-select">
+            <option></option>
+            <option>ADEUDO SEPA CORE</option>
+            <option>CONFIRMING</option>
+            <option>TRANSFERENCIA</option>
+            <option>PAGARÉ</option>
+            <option>CHEQUE</option>
+            <option>REPOSICIÓN</option>
+            <option>EFECTIVO</option>
+            <option>LETRA ACEPTADA</option>
+        </select>
+    </div>
+
+</div>
+
+
+</div>
+
+<div class="bloque-azul">
+
+
+    <div class="row mb-2">
+
+        <div class="col-md-7 text-center">
+
+            <h5 class="fw-bold">
+                CUENTA BANCARIA PARA DOMICILIACIÓN DE RECIBOS - IBAN
+            </h5>
+
+            <div class="row mt-1">
+
+                <div class="col">
+                    <label>PREF IBAN</label>
+                    <input type="text" maxlength="4" class="form-control text-center">
+                </div>
+
+                <div class="col">
+                    <label>ENTIDAD</label>
+                    <input type="text" maxlength="4" class="form-control text-center">
+                </div>
+
+                <div class="col">
+                    <label>SUCURSAL</label>
+                    <input type="text" maxlength="4" class="form-control text-center">
+                </div>
+
+                <div class="col">
+                    <label>D.C.</label>
+                    <input type="text" maxlength="2" class="form-control text-center">
+                </div>
+
+                <div class="col-4">
+                    <label>Nº DE CUENTA</label>
+                    <input type="text" maxlength="10" class="form-control text-center">
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-5 text-center">
+
+            <h5 class="fw-bold">
+                ENTIDAD BANCARIA CLAVE INTERNACIONAL
+            </h5>
+
+            <div class="mt-0">
+
+                <label>BANCO CODIGO SWIFT / BIC</label>
+
+                <input
+                    type="text"
+                    class="form-control text-center">
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="bloque-azul">
+
+    <div class="row align-items-center">
+
+        <div class="col-md-7">
+
+            <h6 class="fw-bold text-center mb-3">
+                REPRESENTANTE COMERCIAL DIMAE
+            </h6>
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <label>NOMBRE</label>
+
+                    <input
+                        type="text"
+                        class="form-control">
+
+                </div>
+
+                <div class="col-md-8">
+
+                    <label>APELLIDOS</label>
+
+                    <input
+                        type="text"
+                        class="form-control">
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-5">
+
+            <div class="row mb-1">
+
+                <div class="col-md-8 text-end">
+
+                    <label>
+                        CRÉDITO SOLICITADO (€)
+                    </label>
+
+                </div>
+
+                <div class="col-md-4 importe-euro">
+                    <input type="number" class="form-control">
+ 
+                </div>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-8 text-end">
+
+                    <label>
+                        CRÉDITO APROBADO (€)
+                    </label>
+
+                </div>
+
+                <div class="col-md-4 importe-euro">
+
+                    <input type="number" class="form-control">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="bloque">
+
+    <div class="row text-center">
+
+        <div class="col-md-3">
+
+            <label>
+                FIRMA COMERCIAL DIELECTRO
+            </label>
+
+            <div class="firma"></div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <label>
+                FIRMA Y SELLO DEL CLIENTE
+            </label>
+
+            <div class="firma"></div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <label>
+                FIRMA Y SELLO DELEGACIÓN
+            </label>
+
+            <div class="firma"></div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <label>
+                APROBADO CENTRAL
+            </label>
+
+            <div class="firma"></div>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="bloque-rgpd">
+
+    <p>
+        El cliente ha leído y acepta las condiciones de venta publicadas en
+
+        <a href="https://www.dielectromanchego.com/condiciones-venta"
+           target="_blank">
+
+            https://www.dielectromanchego.com/condiciones-venta
+
+        </a>
+    </p>
+
+    <p>
+        <strong>DIMAE</strong> es una marca comercial de
+        <strong>Dielectro Manchego S.A.</strong>,
+        que como responsable del tratamiento de los datos de carácter personal
+        y domiciliada en Avenida Isaac Peral, Polígono Industrial Ctra. Carrión,
+        13005 de Ciudad Real, le informa que sus datos son recabados con la
+        finalidad de llevar a cabo, correctamente, la relación comercial,
+        gestión profesional, evaluación del crédito/fiabilidad, el suministro
+        de productos y las prestaciones asociadas a la contratación efectuada,
+        seguimiento y gestión del riesgo del pago, envío de cuestionarios o
+        formularios, cuya contestación es voluntaria, salvo que en ellos disponga
+        otra cosa, así como envío de comunicaciones comerciales por cualquier medio.
+    </p>
+
+    <p>
+        La base jurídica para el tratamiento es la ejecución de un contrato.
+        Para cumplir con la finalidad prevista, sus datos podrán ser cedidos
+        en aquellos casos en que así se exija legalmente a las entidades públicas
+        con competencia en la materia, así como a Tribunales y Juzgados.
+    </p>
+
+    <p>
+        Además podrán ser cedidos a Entidades Financieras, Entidades de Crédito
+        y Caución, gestión de impagos, ASNEF, ADIME para la evaluación de solvencia,
+        crédito y gestión de pagos, conforme a la legislación vigente en la materia.
+    </p>
+
+    <p>
+        Vd. puede ejercitar los legítimos derechos que le correspondan,
+        acceder, rectificar y suprimir sus datos, así como el resto de los
+        derechos sobre Protección de Datos que puede consultar en
+
+        <a href="https://www.dielectromanchego.com/rgpd"
+           target="_blank">
+
+            https://www.dielectromanchego.com/rgpd
+
+        </a>
+    </p>
+
+    <div class="form-check mt-4">
+
+        <input
+            class="form-check-input"
+            type="checkbox"
+            id="consentimientoDatos">
+
+        <label
+            class="form-check-label"
+            for="consentimientoDatos">
+
+            Consiento el tratamiento de mis datos con las finalidades indicadas
+
+        </label>
+
+    </div>
+
+    <div class="form-check mt-3">
+
+        <input
+            class="form-check-input"
+            type="checkbox"
+            id="consentimientoComercial">
+
+        <label
+            class="form-check-label"
+            for="consentimientoComercial">
+
+             Autorizo el envío de comunicaciones comerciales relacionadas con los
+            servicios/productos de DIELECTRO MANCHEGO, por cualquier medio,
+            incluidos los medios electrónicos.
+
+        </label>
+
+    </div>
+
+</div>
+</div>
+</div>
+</body>
+</html>

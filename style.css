@@ -21,9 +21,10 @@ border-radius:8px;
 }
 
 .formularioPDF{
-    width:1200px;
-    margin:auto;
-    overflow:hidden;
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+    overflow: hidden;
 }
 
 .titulo-formulario{
@@ -234,4 +235,28 @@ input[type="checkbox"]{
 .opcion-check{
     display:inline-block;
     width:60px;
+}
+
+/* Ajustes para pantallas móviles (Responsivo) */
+@media (max-width: 767px) {
+    .titulo1 {
+        font-size: 18px !important;
+        margin: 5px 0 !important;
+    }
+    
+    .pedidos-compacto label {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 5px !important;
+    }
+    
+    .bloque-checks {
+        margin-top: 10px;
+    }
+    
+    /* Pequeños ajustes para campos en móviles */
+    .form-control,
+    .form-select {
+        font-size: 16px !important;
+    }
 }
